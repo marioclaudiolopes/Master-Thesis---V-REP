@@ -43,15 +43,17 @@ if (clientID>-1)
     % start the simulation:
     vrep.simxStartSimulation(clientID,vrep.simx_opmode_blocking);
     
-    [~, ankleJointHandle]=vrep.simxGetObjectHandle(clientID,'Revolute_joint',vrep.simx_opmode_blocking);
+%     [~, ankleJointHandle]=vrep.simxGetObjectHandle(clientID,'Revolute_joint',vrep.simx_opmode_blocking);
+    
+    % Start the Streaming (To allow V-REP to put values into the buffer
     
     [~,position]=vrep.simxGetJointPosition(clientID,ankleJointHandle,vrep.simx_opmode_streaming);
     [~, jointTorque]=vrep.simxGetJointForce(clientID,ankleJointHandle,vrep.simx_opmode_streaming);
     
-    count=0;
+    count=0; % Variable for cycle counting
     
     f=1;
-    n=0; % Para contagem de iteração
+    n=0; % step counting (for graph-plotting)
     dt=50; %ms
     
     
@@ -60,14 +62,22 @@ if (clientID>-1)
         vrep.simxSynchronousTrigger(clientID);
         
         n=n+1;
-        [~,position]=vrep.simxGetJointPosition(clientID,ankleJointHandle,vrep.simx_opmode_buffer);
-        [~, jointTorque]=vrep.simxGetJointForce(clientID,ankleJointHandle,vrep.simx_opmode_buffer);
+        
+        %%% The values for a certain step are only put in the buffer after a trigger to start
+        %%% the next step
+        
+        [~,position]=vrep.simxGetJointPosition(clientID,ankleJointHandle,vrep.simx_opmode_buffer); % Position for the previous step
+        [~, jointTorque]=vrep.simxGetJointForce(clientID,ankleJointHandle,vrep.simx_opmode_buffer); % Torque for the previous step
         
         vecIter(n)=n;
         vecPos(n)=position;
         vecTorq(n)=jointTorque;
         
-        pause(.01)
+        
+        pause(.01) % To allow real-time plotting
+        
+        %%% Graph-Plotting
+        
         figure(1)
         subplot(1,2,1)
         plot( (vecIter-vecIter(1) )*dt,vecPos)
